@@ -18,14 +18,14 @@ namespace SecondProject.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var Customers = await _unitofWork.Customerrepository.GetAllAsync();
+            var Customers = await _unitofWork._Customerrepository.GetAllAsync();
             return Ok(Customers);
         }
 
-        [HttpGet("Getbycode/{id}")]
-        public async Task<IActionResult> Getbycode(int id)
+        [HttpGet("GetById/{id}")]
+        public async Task<IActionResult> GetbyId(int id)
         {
-            var customer = await _unitofWork.Customerrepository.GetAsync(id);
+            var customer = await _unitofWork._Customerrepository.GetAsync(id);
 
             if (customer is null)
             {
@@ -37,10 +37,10 @@ namespace SecondProject.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> Create(Customer customer)
         {
-            var customerToAdd = _unitofWork.Customerrepository.AddEntity(customer);
+            var customerToAdd = _unitofWork._Customerrepository.AddEntity(customer);
             await _unitofWork.SaveChangesAsync();
             //return Ok(customerToAdd);
-            return CreatedAtAction("Getbycode", new { id = customer.Id }, customer);
+            return CreatedAtAction("GetById", new { id = customer.Id }, customer);
 
         }
 
@@ -52,7 +52,7 @@ namespace SecondProject.Controllers
                 return BadRequest();
             }
 
-            var customerToUpdate = await _unitofWork.Customerrepository.UpdateEntity(customer, id);
+            var customerToUpdate = await _unitofWork._Customerrepository.UpdateEntity(customer, id);
 
             await _unitofWork.SaveChangesAsync();
 
@@ -63,7 +63,7 @@ namespace SecondProject.Controllers
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _unitofWork.Customerrepository.DeleteEntity(id);
+            await _unitofWork._Customerrepository.DeleteEntity(id);
 
             await _unitofWork.SaveChangesAsync();
             return NoContent();

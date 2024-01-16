@@ -4,8 +4,7 @@
     {
         private IShippingStrategy _strategy;
 
-        public ShippingContext()
-        { }
+
 
         public ShippingContext(IShippingStrategy strategy)
         {

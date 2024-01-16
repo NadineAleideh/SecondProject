@@ -2,8 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using SecondProject.CQRS.Command;
 using SecondProject.CQRS.Query;
-using SecondProject.CQRS;
 using SecondProject.Models;
+using MediatR;
+using SecondProject.CQRS.Query.GetAll;
+using SecondProject.CQRS.Command.Delete;
+using SecondProject.CQRS.Query.GetById;
+using SecondProject.CQRS.Query.GetByName;
 
 namespace SecondProject.Controllers
 {
@@ -11,26 +15,40 @@ namespace SecondProject.Controllers
     [Route("api/products")]
     public class ProductController : ControllerBase
     {
-        private readonly ProductCommandHandler _commandHandler;
-        private readonly ProductQueryHandler _queryHandler;
 
-        public ProductController(ProductCommandHandler commandHandler, ProductQueryHandler queryHandler)
+        private readonly IMediator _mediator;
+        public ProductController(IMediator mediator)
         {
-            _commandHandler = commandHandler;
-            _queryHandler = queryHandler;
+            _mediator = mediator;
         }
 
         [HttpGet]
-        public ActionResult<List<Product>> GetProducts()
+        public async Task<ActionResult<List<Product>>> GetAllProducts()
         {
-            var products = _queryHandler.Handle(new GetProductsQuery());
+            var query = new GetProductsQuery();
+            var products = await _mediator.Send(query);
             return Ok(products);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Product> GetProductById(int id)
+        public async Task<ActionResult<Product>> GetProductById(int id)
         {
-            var product = _queryHandler.Handle(new GetProductByIdQuery { Id = id });
+            var query = new GetProductByIdQuery { Id = id };
+            var product = await _mediator.Send(query);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+
+        [HttpGet("byName/{name}")]
+        public async Task<ActionResult<Product>> GetProductByName(string name)
+        {
+            var query = new GetProductByNameQuery { ProductName = name };
+            var product = await _mediator.Send(query);
 
             if (product == null)
             {
@@ -41,25 +59,29 @@ namespace SecondProject.Controllers
         }
 
         [HttpPost]
-        public ActionResult CreateProduct([FromBody] CreateProductCommand command)
+        public async Task<ActionResult<int>> CreateProduct([FromBody] CreateProductCommand command)
         {
-            _commandHandler.Handle(command);
-            return Ok();
+            var productId = await _mediator.Send(command);
+            return Ok(productId);
         }
 
+
         [HttpPut("{id}")]
-        public ActionResult UpdateProduct(int id, [FromBody] UpdateProductCommand command)
+        public async Task<ActionResult<Product>> UpdateProduct(int id, [FromBody] UpdateProductCommand command)
         {
             command.Id = id;
-            _commandHandler.Handle(command);
-            return Ok();
+            var product = await _mediator.Send(command);
+            return Ok(product);
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteProduct(int id)
+        public async Task<ActionResult> DeleteProduct(int id)
         {
-            _commandHandler.Handle(new DeleteProductCommand { Id = id });
+            var command = new DeleteProductCommand { Id = id };
+            await _mediator.Send(command);
             return NoContent();
         }
+
+
     }
 }

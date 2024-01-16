@@ -16,25 +16,25 @@ namespace SecondProject.Controllers
     public class CheckoutController : ControllerBase
     {
         private readonly IShippingContext _shippingContext;
-        private readonly AppDBContext _dbContext;
+        private readonly IUnitofWork _unitOfWork;
 
-        public CheckoutController(IShippingContext shippingContext, AppDBContext dbContext)
+        public CheckoutController(IUnitofWork unitOfWork, IShippingContext shippingContext)
         {
             _shippingContext = shippingContext;
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
         }
 
-        [HttpGet("AllCheckouts")]
-        public ActionResult<IEnumerable<Checkout>> GetAllCheckouts()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Checkout>>> GetCheckouts()
         {
-            var checkouts = _dbContext.Checkouts.Include(c => c.shippingMethod).ToList();
+            var checkouts = await _unitOfWork._Checkoutrepository.GetAllWithShippingMethodAsync();
             return Ok(checkouts);
         }
 
-        [HttpGet("Checkout/{id}")]
-        public ActionResult<Checkout> GetCheckoutById(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Checkout>> GetCheckoutById(int id)
         {
-            var checkout = _dbContext.Checkouts.Include(c => c.shippingMethod).FirstOrDefault(c => c.Id == id);
+            var checkout = await _unitOfWork._Checkoutrepository.GetWithShippingMethodAsync(id);
 
             if (checkout == null)
             {
@@ -45,55 +45,56 @@ namespace SecondProject.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Checkout> CreateCheckout([FromBody] CheckoutPostDto checkoutDto)
+        public async Task<ActionResult<Checkout>> CreateCheckout([FromBody] CheckoutPostDto checkoutDto)
         {
-            if (checkoutDto == null || checkoutDto.ShippingMethodId == 0 || checkoutDto.OrderTotal <= 0)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Invalid input");
-            }
-
-            var shippingMethod = _dbContext.ShippingMethods.FirstOrDefault(m => m.Id == checkoutDto.ShippingMethodId);
-
-            if (shippingMethod == null)
-            {
-                return BadRequest("Invalid shipping method");
+                return BadRequest(ModelState);
             }
 
             var newCheckout = new Checkout
             {
                 OrderTotal = checkoutDto.OrderTotal,
-                ShippingMethodId = checkoutDto.ShippingMethodId,
-                shippingMethod = shippingMethod
+                ShippingMethodId = checkoutDto.ShippingMethodId
             };
 
-            _shippingContext.SetStrategy(GetShippingStrategy(shippingMethod));
+            // Fetch the selected shipping method using the repository
+            var shippingMethod = await _unitOfWork._Checkoutrepository
+                .GetShippingMethodByIdAsync(checkoutDto.ShippingMethodId);
+
+            newCheckout.shippingMethod = shippingMethod;
+
+            // Use the selected shipping strategy to calculate the final total
+            _shippingContext.SetStrategy(GetShippingStrategy(shippingMethod.Id));
             newCheckout.FinalTotal = _shippingContext.ExecuteStrategy(newCheckout.OrderTotal);
 
-            _dbContext.Checkouts.Add(newCheckout);
-            _dbContext.SaveChanges();
+
+            _unitOfWork._Checkoutrepository.AddEntity(newCheckout);
+            await _unitOfWork.SaveChangesAsync();
 
             return Ok(newCheckout);
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteCheckout(int id)
+        public async Task<ActionResult> DeleteCheckout(int id)
         {
-            var checkout = _dbContext.Checkouts.FirstOrDefault(c => c.Id == id);
+            var checkout = await _unitOfWork._Checkoutrepository.GetWithShippingMethodAsync(id);
 
             if (checkout == null)
             {
                 return NotFound();
             }
 
-            _dbContext.Checkouts.Remove(checkout);
-            _dbContext.SaveChanges();
+            _unitOfWork._Checkoutrepository.DeleteEntity(id);
+            await _unitOfWork.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private IShippingStrategy GetShippingStrategy(ShippingMethod shippingMethod)
+
+        private IShippingStrategy GetShippingStrategy(int shippingMethodId)
         {
-            switch (shippingMethod.Id)
+            switch (shippingMethodId)
             {
                 case 1:
                     return new FreeShippingStrategy();
@@ -102,9 +103,10 @@ namespace SecondProject.Controllers
                 case 3:
                     return new WorldwideShippingStrategy();
                 default:
-                    throw new NotSupportedException("Unsupported shipping method");
+                    throw new NotImplementedException("Shipping strategy not implemented for the selected method.");
             }
         }
     }
+
 
 }

@@ -1,10 +1,19 @@
 
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SecondProject.CQRS;
+using SecondProject.CQRS.Command.Create;
+using SecondProject.CQRS.Command.Delete;
+using SecondProject.CQRS.Command.Update;
+using SecondProject.CQRS.Query.GetAll;
+using SecondProject.CQRS.Query.GetById;
+using SecondProject.CQRS.Query.GetByName;
 using SecondProject.Data;
 using SecondProject.Interfaces;
+using SecondProject.Repository;
 using SecondProject.strategy;
 using SecondProject.UoW;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace SecondProject
@@ -28,11 +37,18 @@ namespace SecondProject
             // Add services to the container.
             builder.Services.AddScoped<IUnitofWork, UnitOfwork>();
 
+
             builder.Services.AddScoped<IShippingContext, ShippingContext>();
+            builder.Services.AddScoped<IShippingStrategy, FreeShippingStrategy>();
+            builder.Services.AddScoped<IShippingStrategy, LocalShippingStrategy>();
+            builder.Services.AddScoped<IShippingStrategy, WorldwideShippingStrategy>();
 
-            builder.Services.AddScoped<ProductCommandHandler>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
-            builder.Services.AddScoped<ProductQueryHandler>();
+            //it will register all the handlers in this assembly
+
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
+
 
 
             builder.Services.AddControllers();

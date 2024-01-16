@@ -14,46 +14,35 @@ namespace SecondProject.Repository
         {
         }
 
-        public Task<List<Customer>> GetAllAsync()
-        {
-            return base.GetAllAsync();
-        }
+        //public Task<List<Customer>> GetAllAsync()
+        //{
+        //    return base.GetAllAsync();
+        //}
 
-        public override async Task<Customer> GetAsync(Object id)
-        {
-            return await DbSet.FindAsync(id);
-        }
+        //public async Task<Customer> GetAsync(Object id)
+        //{
+        //    return await base.GetAsync(id);
+        //}
 
-        public override async Task<Customer> AddEntity(Customer entity)
-        {
-            await DbSet.AddAsync(entity);
-            return entity;
+        //public async Task<Customer> AddEntity(Customer entity)
+        //{
+        //    var customer = await base.AddEntity(entity);
 
-        }
-        public override async Task<Customer> UpdateEntity(Customer entity, object id)
-        {
-            var existdata = await DbSet.FindAsync(id);
+        //    return customer;
 
-            existdata.Name = entity.Name;
-            existdata.Phone = entity.Phone;
-            existdata.Email = entity.Email;
-            existdata.CreditLimit = entity.CreditLimit;
+        //}
+        //public async Task<Customer> UpdateEntity(Customer entity, object id)
+        //{
+        //    var customer = await base.UpdateEntity(entity, id);
 
-            return existdata;
+        //    return customer;
 
+        //}
 
-
-        }
-
-        public override async Task DeleteEntity(object id)
-        {
-            var existdata = await DbSet.FindAsync(id);
-            if (existdata != null)
-                DbSet.Remove(existdata);
-
-
-
-        }
+        //public async Task DeleteEntity(object id)
+        //{
+        //    await base.DeleteEntity(id);
+        //}
 
     }
 }

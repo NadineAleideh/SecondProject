@@ -1,11 +1,13 @@
 ﻿using SecondProject.Repository;
+using SecondProject.strategy;
 
 namespace SecondProject.Interfaces
 {
     public interface IUnitofWork : IDisposable
     {
-        CustomerRepository Customerrepository { get; }
-
+        ICustomerrepository _Customerrepository { get; }
+        ICheckoutrepository _Checkoutrepository { get; }
+        IProductRepository _Productrepository { get; }
         Task SaveChangesAsync();
     }
 }

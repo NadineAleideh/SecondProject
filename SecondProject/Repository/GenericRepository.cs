@@ -19,29 +19,40 @@ namespace SecondProject.Repository
             this._dbContext = appDBContext;
             this.DbSet = this._dbContext.Set<T>();
         }
-        public virtual Task<T> AddEntity(T entity)
+        public virtual async Task<T> AddEntity(T entity)
         {
-            throw new NotImplementedException();
+            await this.DbSet.AddAsync(entity);
+            return entity;
         }
 
-        public virtual Task DeleteEntity(Object id)
+        public virtual async Task DeleteEntity(Object id)
         {
-            throw new NotImplementedException();
+            var entityToDelete = await DbSet.FindAsync(id);
+            if (entityToDelete != null)
+            {
+                DbSet.Remove(entityToDelete);
+            }
         }
 
-        public  Task<List<T>> GetAllAsync()
+        public virtual Task<List<T>> GetAllAsync()
         {
             return this.DbSet.ToListAsync();
         }
 
-        public virtual Task<T> GetAsync(Object id)
+        public virtual async Task<T> GetAsync(Object id)
         {
-            throw new NotImplementedException();
+
+            return await this.DbSet.FindAsync(id);
         }
 
-        public virtual Task<T> UpdateEntity(T entity, object id)
+        public virtual async Task<T> UpdateEntity(T entity, object id)
         {
-            throw new NotImplementedException();
+            var existingEntity = await DbSet.FindAsync(id);
+            if (existingEntity != null)
+            {
+                _dbContext.Entry(existingEntity).CurrentValues.SetValues(entity);
+            }
+            return existingEntity;
         }
     }
 }

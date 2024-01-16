@@ -2,15 +2,18 @@
 using SecondProject.Data;
 using SecondProject.Interfaces;
 using SecondProject.Repository;
+using SecondProject.strategy;
 
 namespace SecondProject.UoW
 {
     public class UnitOfwork : IUnitofWork
     {
 
-        public CustomerRepository Customerrepository { get; private set; }
+        public ICustomerrepository _Customerrepository { get; private set; }
+        public ICheckoutrepository _Checkoutrepository { get; private set; }
+        public IProductRepository _Productrepository { get; private set; }
 
-        private bool _disposed = false;
+
         public DbContext Context => _dbContext;
 
         //DB context injection 
@@ -19,7 +22,10 @@ namespace SecondProject.UoW
         public UnitOfwork(AppDBContext appDBContext)
         {
             this._dbContext = appDBContext;
-            Customerrepository = new CustomerRepository(_dbContext);//right or not?
+            _Customerrepository = new CustomerRepository(_dbContext);
+            _Checkoutrepository = new CheckoutRepository(_dbContext);
+            _Productrepository =new ProductRepository(_dbContext);
+
         }
         public async Task SaveChangesAsync()
         {
@@ -29,21 +35,11 @@ namespace SecondProject.UoW
         //ensures proper resource cleanup
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            _dbContext.Dispose();
+
+
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _dbContext.Dispose();
-                }
 
-                _disposed = true;
-            }
-        }
     }
 }

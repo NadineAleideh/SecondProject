@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SecondProject.Data;
@@ -11,6 +12,7 @@ using System;
 
 namespace SecondProject.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/checkout")]
     public class CheckoutController : ControllerBase

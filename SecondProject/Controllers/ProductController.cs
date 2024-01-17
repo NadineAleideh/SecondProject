@@ -8,9 +8,11 @@ using SecondProject.CQRS.Query.GetAll;
 using SecondProject.CQRS.Command.Delete;
 using SecondProject.CQRS.Query.GetById;
 using SecondProject.CQRS.Query.GetByName;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SecondProject.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/products")]
     public class ProductController : ControllerBase

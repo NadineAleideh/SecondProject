@@ -1,6 +1,9 @@
 
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SecondProject.CQRS;
 using SecondProject.CQRS.Command.Create;
 using SecondProject.CQRS.Command.Delete;
@@ -10,9 +13,13 @@ using SecondProject.CQRS.Query.GetById;
 using SecondProject.CQRS.Query.GetByName;
 using SecondProject.Data;
 using SecondProject.Interfaces;
+using SecondProject.Models;
 using SecondProject.Repository;
+using SecondProject.Services;
 using SecondProject.strategy;
+using SecondProject.Swagger;
 using SecondProject.UoW;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -49,11 +56,36 @@ namespace SecondProject
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
 
+            builder.Services.AddScoped<IUser, IdentityUserServices>();
+            builder.Services.AddScoped<JwtTokenService>();
+
+
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                //here we can set various options to costumize the identity service in our app
+                options.User.RequireUniqueEmail = true; // this force that each user must have a uniqe address
+            }).AddEntityFrameworkStores<AppDBContext>();
+
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                // Tell the authenticaion scheme "how/where" to validate the token + secret
+                options.TokenValidationParameters = JwtTokenService.GetValidationPerameters(builder.Configuration);
+            });
 
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
+
+            //to enable token bearer functionality in swagger
+            builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
